@@ -181,9 +181,11 @@ int main()
    	init.printNodes();
 	init.calculateDistanceMatrix();
 	init.printDistanceMatrix();
-	
 
-    return 0;
+	init.generateVehicles();
+	init.printVehicles();
+
+	return 0;
 }
 
 
