@@ -4,7 +4,7 @@
 //
 //  Created by Gokay on 29.12.2017.
 //
-
+#include "stdafx.h"
 #include <iostream>
 #include <vector>
 #include <cstdlib>
