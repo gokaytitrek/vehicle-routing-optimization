@@ -112,44 +112,63 @@ class Init {
 			for(int i = 1; i <= this->noOfCustomers; i++) {
 				nodes.push_back(Node(i));
 			}
+	void printNodes()
+	{
+		cout << "Nodes" << endl;
+
+		//Print Nodes
+		for (int i = 0; i <= this->noOfCustomers; i++) {
+			cout << "Node ID:" << nodes[i].nodeId << "\tX:" << nodes[i].nodeX << "\tY:" << nodes[i].nodeY << "\tDemand:" << nodes[i].demand << endl;
 		}
-		
-		printNodes()
-		{
-			cout << "Nodes" << endl;
-			
-			//Print Nodes
-			for(int i = 0; i <= this->noOfCustomers; i++) {
-				cout << "Node ID:"<<  nodes[i].nodeId  << "\tX:"<<  nodes[i].nodeX << "\tY:" << nodes[i].nodeY << "\tDemand:" << nodes[i].demand <<endl;
-			}
-			cout << endl << endl;
-		}
-		
-		calculateDistanceMatrix(){
-			double deltaX,deltaY;
-			for(int i=0;i<=NO_OF_CUSTOMER;i++){
-				for(int j=i+1;j<=NO_OF_CUSTOMER;j++){
-					deltaX = this->nodes[i].nodeX - this->nodes[j].nodeX;
-					deltaY = this->nodes[i].nodeY - this->nodes[j].nodeY;
-					
-					double distance = round(sqrt((deltaX * deltaX) + (deltaY * deltaY)));
-					
-					this->distanceMatrix[i][j] = distance;
-					this->distanceMatrix[j][i] = distance;
-				}
+		cout << endl << endl;
+	}
+
+	void calculateDistanceMatrix(){
+		double deltaX, deltaY;
+		for (int i = 0; i <= NO_OF_CUSTOMER; i++){
+			for (int j = i + 1; j <= NO_OF_CUSTOMER; j++){
+				deltaX = this->nodes[i].nodeX - this->nodes[j].nodeX;
+				deltaY = this->nodes[i].nodeY - this->nodes[j].nodeY;
+
+				double distance = round(sqrt((deltaX * deltaX) + (deltaY * deltaY)));
+
+				this->distanceMatrix[i][j] = distance;
+				this->distanceMatrix[j][i] = distance;
 			}
 		}
-		
-		printDistanceMatrix(){
-			cout << "Distance Matrix" << endl;
-			for (int i = 0; i <= NO_OF_CUSTOMER; i++) {
-                for (int j = 0; j <= NO_OF_CUSTOMER; j++) {
-                    cout << this->distanceMatrix[i][j] << "\t";
-                }
-                cout << endl;
-            }
-            cout << endl << endl;
+	}
+
+	void printDistanceMatrix(){
+		cout << "Distance Matrix" << endl;
+		for (int i = 0; i <= NO_OF_CUSTOMER; i++) {
+			for (int j = 0; j <= NO_OF_CUSTOMER; j++) {
+				cout << this->distanceMatrix[i][j] << "\t";
+			}
+			cout << endl;
 		}
+		cout << endl << endl;
+	}
+
+	void generateVehicles(){
+		for (int i = 1; i <= this->noOfVehicles; i++) {
+			vehicles.push_back(Vehicle(i));
+		}
+	}
+
+	void printVehicles()
+	{
+		cout << "Vehicles" << endl;
+
+		//Print Nodes
+		for (int i = 0; i < this->noOfVehicles; i++) {
+			cout << "Vehicle ID:" << vehicles[i].vehicleId
+				<< "\tCapacity:" << vehicles[i].capacity
+				<< "\tLoad:" << vehicles[i].load
+				<< "\tCurrent location:" << vehicles[i].currentLocation
+				<< endl;
+		}
+		cout << endl << endl;
+	}
 };
 
 
