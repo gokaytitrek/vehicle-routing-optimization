@@ -12,7 +12,7 @@
 
 #define NO_OF_CUSTOMER 5
 #define NO_OF_VEHICLES 30
-#define VEHICLE_Cap 90
+#define VEHICLE_CAPACITY 90
 
 using namespace std;
 
