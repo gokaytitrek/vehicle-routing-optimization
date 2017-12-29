@@ -43,6 +43,43 @@ Node::Node(int id)
 	this->isDepot = false;
 }
 
+class Vehicle{
+public:
+	int vehicleId, load, currentLocation;
+	int capacity = VEHICLE_CAPACITY;
+	vector<Node> nodes;
+	bool closed;
+
+	Vehicle(int id);
+
+public:
+	void addNode(Node customer){
+		this->nodes.emplace_back(customer);
+		this->load += customer.demand;
+		this->currentLocation = customer.nodeId;
+	}
+
+	bool checkCapacity(int demand){
+		if (this->load + demand <= this->capacity){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+};
+
+Vehicle::Vehicle(int id)
+{
+	this->vehicleId = id;
+	this->capacity = VEHICLE_CAPACITY;
+	this->load = 0;
+	this->currentLocation = 0;
+	this->closed = false;
+	this->nodes.clear();
+}
+
 class Init {
 	public:
 		vector<Node> nodes;
