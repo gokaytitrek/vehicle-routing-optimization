@@ -21,6 +21,7 @@ class Node {
       	int nodeId, nodeX, nodeY, demand;
       	bool isRouted, isDepot;
       	
+		//Depot node
       	Node(int coordinateX, int coordinateY);
 		Node(int id);
 };
@@ -30,6 +31,7 @@ Node::Node(int coordinateX, int coordinateY)
 	this->nodeId = 0;
 	this->nodeX = coordinateX;
 	this->nodeY = coordinateY;	
+	this->demand = 0;
 	this->isDepot = true;
 }
 
@@ -159,7 +161,7 @@ class Init {
 	{
 		cout << "Vehicles" << endl;
 
-		//Print Nodes
+		//Print Vehicles
 		for (int i = 0; i < this->noOfVehicles; i++) {
 			cout << "Vehicle ID:" << vehicles[i].vehicleId
 				<< "\tCapacity:" << vehicles[i].capacity
