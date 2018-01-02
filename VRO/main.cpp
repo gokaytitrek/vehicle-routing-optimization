@@ -11,21 +11,23 @@
 #include <vector>
 #include <cstdlib>
 #include <math.h>
+#include <float.h>
 
-#define NO_OF_CUSTOMER 5
-#define NO_OF_VEHICLES 30
-#define VEHICLE_CAPACITY 90
+#define NO_OF_CUSTOMER 50
+#define NO_OF_VEHICLES 10
+#define VEHICLE_CAPACITY 80
 
 using namespace std;
 
 class Node {
 public:
 	int nodeId, nodeX, nodeY, demand;
-	bool isRouted, isDepot;
+	bool isRouted, isDepot,isValid;
 
 	//Depot node
 	Node(int coordinateX, int coordinateY);
 	Node(int id);
+	Node();
 };
 
 Node::Node(int coordinateX, int coordinateY)
@@ -35,6 +37,7 @@ Node::Node(int coordinateX, int coordinateY)
 	this->nodeY = coordinateY;
 	this->demand = 0;
 	this->isDepot = true;
+	this->isValid = true;
 }
 
 Node::Node(int id)
@@ -45,6 +48,11 @@ Node::Node(int id)
 	this->demand = (rand() % 9) + 1;//Generate random demnand betweend 1-9
 	this->isRouted = false;
 	this->isDepot = false;
+	this->isValid = true;
+}
+
+Node::Node(){
+	this->isValid = false;
 }
 
 class Vehicle{
@@ -55,6 +63,7 @@ public:
 	bool closed;
 
 	Vehicle(int id);
+	Vehicle();
 
 public:
 	void addNode(Node customer){
@@ -71,7 +80,6 @@ public:
 			return false;
 		}
 	}
-
 };
 
 Vehicle::Vehicle(int id)
@@ -82,6 +90,12 @@ Vehicle::Vehicle(int id)
 	this->currentLocation = 0;
 	this->closed = false;
 	this->nodes.clear();
+}
+
+//Default Constructor for Vehicle
+Vehicle::Vehicle()
+{
+
 }
 
 class Init {
@@ -178,7 +192,138 @@ public:
 	}
 };
 
+class VRPSolution{
+	public:
+		Vehicle Vehicles[NO_OF_VEHICLES];
+		double Cost;
 
+		int noOfVehicles;
+		int noOfCustomers;
+
+public:
+	VRPSolution(int noOfCustomers, int noOfVehicles, int vehicleCap)
+	{
+		this->noOfCustomers = noOfCustomers;
+		this->noOfVehicles = noOfVehicles;
+		this->Cost = 0;
+		//Initialize Vehicle Array
+		for (int i = 0; i < noOfVehicles; i++)
+		{
+			Vehicles[i] = Vehicle( i + 1);
+		}
+	}
+
+	void GreedySolutionForVRP(Node Nodes[], double CostMatrix[][NO_OF_CUSTOMER+1])
+	{
+		double CandidateCost, EndCost;
+		int vehicleIndex = 0;
+		//Loop if there is a customer node which has not assigned yes
+		while (CheckUnassignedCustomerExists(Nodes)) {
+			int CustomerIndex = 0;
+			Node CandCustomer; // Candidate Customer Node
+			
+			double minimumCost = (float)DBL_MAX; //Minimum Cost
+
+			//If route of vehicle is empty, then add first node
+			if (Vehicles[vehicleIndex].nodes.empty())
+			{
+				Vehicles[vehicleIndex].addNode(Nodes[0]);
+			}
+
+			for (int i = 1; i <= noOfCustomers; i++) {
+				//If customer has not a root yet
+				if (Nodes[i].isRouted == false) {
+					//Check whether there exists enough space for that customer in vehicle
+					if (Vehicles[vehicleIndex].checkCapacity(Nodes[i].demand)) {
+						//Find the distance between vehicle's cureent prosition and customer 
+						CandidateCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][i];
+						//If that distance is smaller than found minCost found so far
+						//then set this cost as new min cost
+						if (minimumCost > CandidateCost) {
+							minimumCost = CandidateCost;
+							CustomerIndex = i;
+							CandCustomer = Nodes[i];
+						}
+
+					}
+				}
+			}
+			//If CandidateCustomer is null
+			if (!CandCustomer.isValid)
+			{
+				//That customer does not fit
+				if (vehicleIndex + 1 < sizeof(Vehicles)) //We can assign that customer to other cancidate vehicles
+				{
+					if (Vehicles[vehicleIndex].currentLocation != 0) {//Finish the route for that vehicle
+						EndCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][0]; // Find the distance of that vehicle to depot
+						Vehicles[vehicleIndex].addNode(Nodes[0]); // Add depot to its route
+						this->Cost += EndCost; //update total cost of greedy solution
+					}
+					vehicleIndex = vehicleIndex + 1; //Choose next vehicle
+				}
+				else //We DO NOT have any more vehicle to assign. The problem is unsolved under these parameters
+				{
+					cout<<"\n The customers which do not have a route can not be assigned" <<endl<<
+						"Under these conditions, the problem is unsolvable"<<endl;
+					exit(0);
+				}
+			}
+			else
+			{
+				Vehicles[vehicleIndex].addNode(CandCustomer);//Add this candidate customer to the vehicle's path
+				Nodes[CustomerIndex].isRouted = true;
+				this->Cost += minimumCost; //ncrease the total cost for this greedySolution
+			}
+
+			// Find the distance of that vehicle to depot
+			EndCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][0];
+			// Add depot to its route
+			Vehicles[vehicleIndex].addNode(Nodes[0]);
+			//update total cost of greedy solution
+			this->Cost += EndCost;
+
+		}
+
+	}
+
+	bool CheckUnassignedCustomerExists(Node Nodes[])
+	{
+		for (int i = 1; i < sizeof(Nodes); i++)
+		{
+			if (!Nodes[i].isRouted)
+				return true;
+		}
+		return false;
+	}
+
+	void PrintSolution(string name)//Print Solution In console
+	{
+		cout<<"========================================================="<<endl;
+		printf("Solution name is : %s\n", name);
+
+		for (int j = 0; j < noOfVehicles; j++)
+		{
+			if (!Vehicles[j].nodes.empty())
+			{
+				cout<<"Vehicle " << j <<":";
+				int routeSize = Vehicles[j].nodes.size();
+				for (int e = 0; e < routeSize; e++) {
+					if (e == routeSize - 1)
+					{
+						cout << Vehicles[j].nodes.at(e).nodeId;
+					}
+					else
+					{
+						cout<<Vehicles[j].nodes.at(e).nodeId << "->";
+					}
+				}
+				cout << endl;
+			}
+		}
+		cout<<"\nSolution Cost "<<this->Cost<<endl;
+	}
+
+};
 int _tmain(int argc, _TCHAR* argv[])
 {
 	cout << "Vehicle routing optimization" << endl;
@@ -191,6 +336,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	init.generateVehicles();
 	init.printVehicles();
+
+	VRPSolution solution(NO_OF_CUSTOMER, NO_OF_VEHICLES, VEHICLE_CAPACITY);
+
+	solution.GreedySolutionForVRP(&init.nodes[0], init.distanceMatrix);
+
+	solution.PrintSolution("Greedy Solution");
+
+
 
 	return 0;
 }
