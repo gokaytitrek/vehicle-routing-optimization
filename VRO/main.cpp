@@ -106,6 +106,7 @@ public:
 	int noOfCustomers;
 	int noOfVehicles;
 	int vehicleCap;
+	double cost = 0;
 
 public:
 	Init(int noOfCustomers, int noOfVehicles, int vehicleCap)
@@ -190,59 +191,37 @@ public:
 		}
 		cout << endl << endl;
 	}
-};
 
-class VRPSolution{
-	public:
-		Vehicle Vehicles[NO_OF_VEHICLES];
-		double Cost;
-
-		int noOfVehicles;
-		int noOfCustomers;
-
-public:
-	VRPSolution(int noOfCustomers, int noOfVehicles, int vehicleCap)
-	{
-		this->noOfCustomers = noOfCustomers;
-		this->noOfVehicles = noOfVehicles;
-		this->Cost = 0;
-		//Initialize Vehicle Array
-		for (int i = 0; i < noOfVehicles; i++)
-		{
-			Vehicles[i] = Vehicle( i + 1);
-		}
-	}
-
-	void GreedySolutionForVRP(Node Nodes[], double CostMatrix[][NO_OF_CUSTOMER+1])
+	void GreedySolutionForVRP()
 	{
 		double CandidateCost, EndCost;
 		int vehicleIndex = 0;
 		//Loop if there is a customer node which has not assigned yes
-		while (CheckUnassignedCustomerExists(Nodes)) {
+		while (CheckUnassignedCustomerExists()) {
 			int CustomerIndex = 0;
 			Node CandCustomer; // Candidate Customer Node
-			
+
 			double minimumCost = (float)DBL_MAX; //Minimum Cost
 
 			//If route of vehicle is empty, then add first node
-			if (Vehicles[vehicleIndex].nodes.empty())
+			if (vehicles[vehicleIndex].nodes.empty())
 			{
-				Vehicles[vehicleIndex].addNode(Nodes[0]);
+				vehicles[vehicleIndex].addNode(nodes[0]);
 			}
 
 			for (int i = 1; i <= noOfCustomers; i++) {
 				//If customer has not a root yet
-				if (Nodes[i].isRouted == false) {
+				if (nodes[i].isRouted == false) {
 					//Check whether there exists enough space for that customer in vehicle
-					if (Vehicles[vehicleIndex].checkCapacity(Nodes[i].demand)) {
+					if (vehicles[vehicleIndex].checkCapacity(nodes[i].demand)) {
 						//Find the distance between vehicle's cureent prosition and customer 
-						CandidateCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][i];
+						CandidateCost = this->distanceMatrix[vehicles[vehicleIndex].currentLocation][i];
 						//If that distance is smaller than found minCost found so far
 						//then set this cost as new min cost
 						if (minimumCost > CandidateCost) {
 							minimumCost = CandidateCost;
 							CustomerIndex = i;
-							CandCustomer = Nodes[i];
+							CandCustomer = nodes[i];
 						}
 
 					}
@@ -252,45 +231,45 @@ public:
 			if (!CandCustomer.isValid)
 			{
 				//That customer does not fit
-				if (vehicleIndex + 1 < sizeof(Vehicles)) //We can assign that customer to other cancidate vehicles
+				if (vehicleIndex + 1 < sizeof(vehicles)) //We can assign that customer to other cancidate vehicles
 				{
-					if (Vehicles[vehicleIndex].currentLocation != 0) {//Finish the route for that vehicle
-						EndCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][0]; // Find the distance of that vehicle to depot
-						Vehicles[vehicleIndex].addNode(Nodes[0]); // Add depot to its route
-						this->Cost += EndCost; //update total cost of greedy solution
+					if (vehicles[vehicleIndex].currentLocation != 0) {//Finish the route for that vehicle
+						EndCost = this->distanceMatrix[vehicles[vehicleIndex].currentLocation][0]; // Find the distance of that vehicle to depot
+						vehicles[vehicleIndex].addNode(nodes[0]); // Add depot to its route
+						this->cost += EndCost; //update total cost of greedy solution
 					}
 					vehicleIndex = vehicleIndex + 1; //Choose next vehicle
 				}
 				else //We DO NOT have any more vehicle to assign. The problem is unsolved under these parameters
 				{
-					cout<<"\n The customers which do not have a route can not be assigned" <<endl<<
-						"Under these conditions, the problem is unsolvable"<<endl;
+					cout << "\n The customers which do not have a route can not be assigned" << endl <<
+						"Under these conditions, the problem is unsolvable" << endl;
 					exit(0);
 				}
 			}
 			else
 			{
-				Vehicles[vehicleIndex].addNode(CandCustomer);//Add this candidate customer to the vehicle's path
-				Nodes[CustomerIndex].isRouted = true;
-				this->Cost += minimumCost; //ncrease the total cost for this greedySolution
+				vehicles[vehicleIndex].addNode(CandCustomer);//Add this candidate customer to the vehicle's path
+				nodes[CustomerIndex].isRouted = true;
+				this->cost += minimumCost; //ncrease the total cost for this greedySolution
 			}
 
 			// Find the distance of that vehicle to depot
-			EndCost = CostMatrix[Vehicles[vehicleIndex].currentLocation][0];
+			EndCost = this->distanceMatrix[vehicles[vehicleIndex].currentLocation][0];
 			// Add depot to its route
-			Vehicles[vehicleIndex].addNode(Nodes[0]);
+			vehicles[vehicleIndex].addNode(nodes[0]);
 			//update total cost of greedy solution
-			this->Cost += EndCost;
+			this->cost += EndCost;
 
 		}
 
 	}
 
-	bool CheckUnassignedCustomerExists(Node Nodes[])
+	bool CheckUnassignedCustomerExists()
 	{
-		for (int i = 1; i < sizeof(Nodes); i++)
+		for (int i = 1; i < sizeof(nodes); i++)
 		{
-			if (!Nodes[i].isRouted)
+			if (!nodes[i].isRouted)
 				return true;
 		}
 		return false;
@@ -298,32 +277,32 @@ public:
 
 	void PrintSolution(string name)//Print Solution In console
 	{
-		cout<<"========================================================="<<endl;
+		cout << "=========================================================" << endl;
 		printf("Solution name is : %s\n", name);
 
 		for (int j = 0; j < noOfVehicles; j++)
 		{
-			if (!Vehicles[j].nodes.empty())
+			if (!vehicles[j].nodes.empty())
 			{
-				cout<<"Vehicle " << j <<":";
-				int routeSize = Vehicles[j].nodes.size();
+				cout << "Vehicle " << j << ":";
+				int routeSize = vehicles[j].nodes.size();
 				for (int e = 0; e < routeSize; e++) {
 					if (e == routeSize - 1)
 					{
-						cout << Vehicles[j].nodes.at(e).nodeId;
+						cout << vehicles[j].nodes.at(e).nodeId;
 					}
 					else
 					{
-						cout<<Vehicles[j].nodes.at(e).nodeId << "->";
+						cout << vehicles[j].nodes.at(e).nodeId << "->";
 					}
 				}
 				cout << endl;
 			}
 		}
-		cout<<"\nSolution Cost "<<this->Cost<<endl;
+		cout << "\nSolution Cost " << this->cost << endl;
 	}
-
 };
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	cout << "Vehicle routing optimization" << endl;
@@ -337,11 +316,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	init.generateVehicles();
 	init.printVehicles();
 
-	VRPSolution solution(NO_OF_CUSTOMER, NO_OF_VEHICLES, VEHICLE_CAPACITY);
-
-	solution.GreedySolutionForVRP(&init.nodes[0], init.distanceMatrix);
-
-	solution.PrintSolution("Greedy Solution");
+	init.GreedySolutionForVRP();
+	init.PrintSolution("Greedy Solution");
 
 
 
