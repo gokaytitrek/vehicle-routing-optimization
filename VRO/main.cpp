@@ -14,6 +14,7 @@
 #include <float.h>
 #include <fstream>
 #include <time.h>       /* time */
+#include <omp.h>
 
 #define NO_OF_CUSTOMER 50
 #define NO_OF_VEHICLES 10
@@ -217,7 +218,7 @@ public:
 			{
 				this->vehicles[vehicleIndex].addNode(nodes[0]);
 			}
-
+//#pragma omp parallel for
 			for (int i = 1; i <= noOfCustomers; i++) {
 				//If customer has not a root yet
 				if (this->nodes[i].isRouted == false) {
@@ -323,7 +324,6 @@ public:
 				previousRoute = this->vehicles[vehicleIndexSource].nodes;
 
 				int RouteFromLength = previousRoute.size();
-
 				for (int i = 1; i < RouteFromLength - 1; i++) { //Not possible to move depot!
 					for (vehicleIndexDestination = 0; vehicleIndexDestination < NO_OF_VEHICLES; vehicleIndexDestination++) {
 						destinationRoute = this->vehicles[vehicleIndexDestination].nodes;
