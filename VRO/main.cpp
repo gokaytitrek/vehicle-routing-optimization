@@ -204,7 +204,7 @@ public:
 
 	void GreedySolutionForVRP()
 	{
-		double CandidateCost, EndCost;
+		double CandidateCost, EndCost = 0;
 		int vehicleIndex = 0;
 		//Loop if there is a customer node which has not assigned yes
 		while (CheckUnassignedCustomerExists()) {
@@ -463,6 +463,231 @@ public:
 		}
 	}
 
+	void IntraRouteLocalSearch() {
+
+		//We use 1-0 exchange move
+		vector<Node> rt;
+		double BestNCost, NeigthboorCost;
+
+		int SwapIndexA = -1, SwapIndexB = -1, SwapRoute = -1;
+
+		int MAX_ITERATIONS = 20000;
+		int iteration_number = 0;
+
+		bool Termination = false;
+
+		while (!Termination)
+		{
+			iteration_number++;
+			BestNCost = 9999999999999999;
+
+			for (int VehIndex = 0; VehIndex < NO_OF_VEHICLES; VehIndex++) {
+				rt = this->vehicles[VehIndex].nodes;
+				if (rt.size() == 0)
+					break;
+				int RoutLength = rt.size();
+
+				for (int i = 1; i < RoutLength - 1; i++) { //Not possible to move depot!
+
+					for (int j = 0; (j < RoutLength - 1); j++) {//Not possible to move after last Depot!
+
+						if ((j != i) && (j != i - 1)) { // Not a move that cHanges solution cost
+
+
+							double MinusCost1 = this->distanceMatrix[rt[i - 1].nodeId][rt[i].nodeId];
+							double MinusCost2 = this->distanceMatrix[rt[i].nodeId][rt[i + 1].nodeId];
+							double MinusCost3 = this->distanceMatrix[rt[j].nodeId][rt[j + 1].nodeId];
+
+							double AddedCost1 = this->distanceMatrix[rt[i - 1].nodeId][rt[i + 1].nodeId];
+							double AddedCost2 = this->distanceMatrix[rt[j].nodeId][rt[i].nodeId];
+							double AddedCost3 = this->distanceMatrix[rt[i].nodeId][rt[j + 1].nodeId];
+
+
+							NeigthboorCost = AddedCost1 + AddedCost2 + AddedCost3
+								- MinusCost1 - MinusCost2 - MinusCost3;
+
+							if (NeigthboorCost < BestNCost) {
+								BestNCost = NeigthboorCost;
+								SwapIndexA = i;
+								SwapIndexB = j;
+								SwapRoute = VehIndex;
+
+							}
+						}
+					}
+				}
+			}
+
+			if (BestNCost < 0) {
+
+				cout << SwapRoute ;
+				rt = this->vehicles[SwapRoute].nodes;
+
+				Node SwapNode = rt[SwapIndexA];
+
+				rt.erase(rt.begin() + SwapIndexA - 1);
+
+				if (SwapIndexA < SwapIndexB)
+				{
+					rt.push_back(SwapNode);
+				}
+				else
+				{
+					rt.push_back(SwapNode);
+				}
+
+				pastSolutions.push_back(this->cost);
+				this->cost += BestNCost;
+			}
+			else{
+				Termination = true;
+			}
+
+			if (iteration_number == MAX_ITERATIONS)
+			{
+				Termination = true;
+			}
+		}
+		pastSolutions.push_back(this->cost);
+
+		try{
+			ofstream myfile;
+			myfile.open("PastSol.txt");
+			for (int i = 0; i< pastSolutions.size(); i++){
+				myfile << pastSolutions[i] << "\t";
+			}
+			myfile.close();
+		}
+		catch (...) {
+			cout << "Eception occured";
+		}
+	}
+
+
+	void InterRouteLocalSearch() {
+
+		//We use 1-0 exchange move
+		vector<Node> previousRoute;
+		vector<Node> destinationRoute;
+
+		int MovingNodeDemand = 0;
+
+		int VehIndexFrom, VehIndexTo;
+		double BestNCost, NeigthboorCost;
+
+		int SwapIndexA = -1, SwapIndexB = -1, SwapRouteFrom = -1, SwapRouteTo = -1;
+
+		int MAX_ITERATIONS = 20000;
+		int iteration_number = 0;
+
+		bool Termination = false;
+
+		while (!Termination)
+		{
+			iteration_number++;
+			BestNCost = DBL_MAX;
+
+			for (VehIndexFrom = 0; VehIndexFrom < NO_OF_VEHICLES; VehIndexFrom++) {
+				previousRoute = this->vehicles[VehIndexFrom].nodes;
+				int RoutFromLength = previousRoute.size();
+				for (int i = 1; i < RoutFromLength - 1; i++) { //Not possible to move depot!
+
+					for (VehIndexTo = 0; VehIndexTo < NO_OF_VEHICLES; VehIndexTo++) {
+						destinationRoute = this->vehicles[VehIndexTo].nodes;
+						int RouteTolength = destinationRoute.size();
+						for (int j = 0; (j < RouteTolength - 1); j++) {//Not possible to move after last Depot!
+
+							MovingNodeDemand = previousRoute[i].demand;
+							if ((VehIndexFrom == VehIndexTo) || this->vehicles[VehIndexTo].checkCapacity(MovingNodeDemand))
+							{
+								if (((VehIndexFrom == VehIndexTo) && ((j == i) || (j == i - 1))) == false)  // Not a move that Changes solution cost
+								{
+									double MinusCost1 = this->distanceMatrix[previousRoute[i - 1].nodeId][previousRoute[i].nodeId];
+									double MinusCost2 = this->distanceMatrix[previousRoute[i].nodeId][previousRoute[i + 1].nodeId];
+									double MinusCost3 = this->distanceMatrix[destinationRoute[j].nodeId][destinationRoute[j + 1].nodeId];
+
+									double AddedCost1 = this->distanceMatrix[previousRoute[i - 1].nodeId][previousRoute[i + 1].nodeId];
+									double AddedCost2 = this->distanceMatrix[destinationRoute[j].nodeId][previousRoute[i].nodeId];
+									double AddedCost3 = this->distanceMatrix[previousRoute[i].nodeId][destinationRoute[j + 1].nodeId];
+
+
+									NeigthboorCost = AddedCost1 + AddedCost2 + AddedCost3
+										- MinusCost1 - MinusCost2 - MinusCost3;
+
+									if (NeigthboorCost < BestNCost) {
+										BestNCost = NeigthboorCost;
+										SwapIndexA = i;
+										SwapIndexB = j;
+										SwapRouteFrom = VehIndexFrom;
+										SwapRouteTo = VehIndexTo;
+
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (BestNCost < 0) {// If Best Neightboor Cost is better than the current
+
+				previousRoute = this->vehicles[SwapRouteFrom].nodes;
+				destinationRoute = this->vehicles[SwapRouteTo].nodes;
+				this->vehicles[SwapRouteFrom].nodes.clear();
+				this->vehicles[SwapRouteTo].nodes.clear();
+
+				Node SwapNode = previousRoute[SwapIndexA];
+
+				previousRoute.erase(previousRoute.begin() + SwapIndexA - 1);
+
+				if (SwapRouteFrom == SwapRouteTo) {
+					if (SwapIndexA < SwapIndexB) {
+						destinationRoute.insert(destinationRoute.begin() + SwapIndexB - 1, SwapNode);
+					}
+					else {
+						destinationRoute.insert(destinationRoute.begin() + SwapIndexB, SwapNode);
+					}
+				}
+				else
+				{
+					destinationRoute.insert(destinationRoute.begin() + SwapIndexB, SwapNode);
+				}
+
+				this->vehicles[SwapRouteFrom].nodes = previousRoute;
+				this->vehicles[SwapRouteFrom].load -= MovingNodeDemand;
+
+				this->vehicles[SwapRouteTo].nodes = destinationRoute;
+				this->vehicles[SwapRouteTo].load += MovingNodeDemand;
+
+				pastSolutions.push_back(this->cost);
+				this->cost += BestNCost;
+			}
+			else{
+				Termination = true;
+			}
+
+			if (iteration_number == MAX_ITERATIONS)
+			{
+				Termination = true;
+			}
+		}
+		pastSolutions.push_back(this->cost);
+
+		try{
+			ofstream myfile;
+			myfile.open("PastSol.txt");
+			for (int i = 0; i< pastSolutions.size(); i++){
+				myfile << pastSolutions[i] << "\t";
+			}
+			myfile.close();
+		}
+		catch (...) {
+			cout << "Eception occured";
+		}
+	}
+
+
+
 	void SaveBestSolution()
 	{
 		bestSolutionCost = this->cost;
@@ -526,9 +751,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	init.GreedySolutionForVRP();
 	init.PrintSolution("Greedy Solution");
 
+	init.IntraRouteLocalSearch();
+	init.PrintSolution("Solution after Intra-Route Heuristic Neighborhood Search");
+
+	init.GreedySolutionForVRP();
+	init.InterRouteLocalSearch();
+	init.PrintSolution("Solution after Inter-Route Heuristic Neighborhood Search");
+
+	init.GreedySolutionForVRP();
 	init.TabuSearchSolutionForVRP();
 	init.PrintSolution("Tabu Search Solution");
-
 
 	return 0;
 }
